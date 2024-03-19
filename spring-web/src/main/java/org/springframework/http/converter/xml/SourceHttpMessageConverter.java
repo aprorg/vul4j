@@ -55,6 +55,8 @@ import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.util.StreamUtils;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 
 /**
  * Implementation of {@link org.springframework.http.converter.HttpMessageConverter}
@@ -162,14 +164,13 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 		try {
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			documentBuilderFactory.setNamespaceAware(true);
-			documentBuilderFactory.setFeature(
-					"http://apache.org/xml/features/disallow-doctype-decl", !isSupportDtd());
-			documentBuilderFactory.setFeature(
-					"http://xml.org/sax/features/external-general-entities", isProcessExternalEntities());
+			documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+			documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+			documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+			documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+			documentBuilderFactory.setXIncludeAware(false);
 			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-			if (!isProcessExternalEntities()) {
-				documentBuilder.setEntityResolver(NO_OP_ENTITY_RESOLVER);
-			}
+			documentBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
 			Document document = documentBuilder.parse(body);
 			return new DOMSource(document);
 		}
@@ -252,8 +253,17 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 		}
 	}
 
+	
 	private void transform(Source source, Result result) throws TransformerException {
-		this.transformerFactory.newTransformer().transform(source, result);
+	    TransformerFactory factory = TransformerFactory.newInstance();
+	    try {
+	        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
+	        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
+	    } catch (IllegalArgumentException e) {
+	        // This can happen if the TransformerFactory implementation does not support the attribute.
+	    }
+	    Transformer transformer = factory.newTransformer();
+	    transformer.transform(source, result);
 	}
 
 
