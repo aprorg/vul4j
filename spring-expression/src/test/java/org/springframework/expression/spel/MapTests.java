@@ -118,17 +118,28 @@ public class MapTests extends AbstractExpressionTests {
 	}
 
 	private void checkConstantMap(String expressionText, boolean expectedToBeConstant) {
-		SpelExpressionParser parser = new SpelExpressionParser();
-		SpelExpression expression = (SpelExpression) parser.parseExpression(expressionText);
-		SpelNode node = expression.getAST();
-		assertTrue(node instanceof InlineMap);
-		InlineMap inlineMap = (InlineMap) node;
-		if (expectedToBeConstant) {
-			assertTrue(inlineMap.isConstant());
-		}
-		else {
-			assertFalse(inlineMap.isConstant());
-		}
+	    if (!isSafeExpression(expressionText)) {
+	        throw new IllegalArgumentException("Unsafe expression provided");
+	    }
+	    SpelExpressionParser parser = new SpelExpressionParser();
+	    SpelExpression expression = (SpelExpression) parser.parseExpression(expressionText);
+	    SpelNode node = expression.getAST();
+	    assertTrue(node instanceof InlineMap);
+	    InlineMap inlineMap = (InlineMap) node;
+	    if (expectedToBeConstant) {
+	        assertTrue(inlineMap.isConstant());
+	    } else {
+	        assertFalse(inlineMap.isConstant());
+	    }
+	}
+	
+	private boolean isSafeExpression(String expression) {
+	    // Implement a method to validate the expression against a whitelist,
+	    // regex pattern or any other method to ensure it doesn't contain
+	    // dangerous code that could lead to code injection.
+	    // This is a placeholder for actual implementation.
+	    // For example, you might only allow alphanumeric characters and simple operators:
+	    return expression.matches("^[a-zA-Z0-9+\\-*/%(). ]+$");
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
