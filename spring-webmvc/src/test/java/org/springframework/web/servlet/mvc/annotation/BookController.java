@@ -19,10 +19,17 @@ package org.springframework.web.servlet.mvc.annotation;
 import java.io.IOException;
 import java.io.Writer;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.servlet.support.RequestDataValueProcessor;
+import org.springframework.web.servlet.support.RequestContextUtils;
 
 /**
  * Used for testing the combination of ControllerClassNameHandlerMapping/SimpleUrlHandlerMapping with @RequestParam in
@@ -32,21 +39,38 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @author Arjen Poutsma
  */
 @Controller
+@SessionAttributes("csrfToken")
 public class BookController {
 
-	@RequestMapping("list")
-	public void list(Writer writer) throws IOException {
-		writer.write("list");
-	}
+    @ModelAttribute("csrfToken")
+    public String getCsrfToken(HttpServletRequest request) {
+        RequestDataValueProcessor processor = RequestContextUtils.getRequestDataValueProcessor(request);
+        return processor != null ? processor.getExtraHiddenFields(request).get("_csrf") : "";
+    }
 
-	@RequestMapping("show")
-	public void show(@RequestParam(required = true) Long id, Writer writer) throws IOException {
-		writer.write("show-id=" + id);
-	}
+    @RequestMapping("list")
+    public void list(@RequestParam("_csrf") String csrfToken, @ModelAttribute("csrfToken") String sessionCsrfToken, Writer writer, SessionStatus status) throws IOException {
+        if (csrfToken.equals(sessionCsrfToken)) {
+            writer.write("list");
+            status.setComplete(); // Clear the session attribute after successful use
+        } else {
+            writer.write("CSRF token mismatch");
+        }
+    }
 
-	@RequestMapping(method = RequestMethod.POST)
-	public void create(Writer writer) throws IOException {
-		writer.write("create");
-	}
+    @RequestMapping("show")
+    public void show(@RequestParam(required = true) Long id, @RequestParam("_csrf") String csrfToken, @ModelAttribute("csrfToken") String sessionCsrfToken, Writer writer, SessionStatus status) throws IOException {
+        if (csrfToken.equals(sessionCsrfToken)) {
+            writer.write("show-id=" + id);
+            status.setComplete(); // Clear the session attribute after successful use
+        } else {
+            writer.write("CSRF token mismatch");
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST)
+    public void create(Writer writer) throws IOException {
+        writer.write("create");
+    }
 
 }
