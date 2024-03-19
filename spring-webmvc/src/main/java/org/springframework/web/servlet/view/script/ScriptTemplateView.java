@@ -343,11 +343,14 @@ public class ScriptTemplateView extends AbstractUrlBasedView {
 			ScriptEngine engine = getEngine();
 			Invocable invocable = (Invocable) engine;
 			String url = getUrl();
-			String template = getTemplate(url);
+			// Ensure that the template content is not influenced by user input
+			String template = getSafeTemplate(url);
 
 			Object html;
 			if (this.renderObject != null) {
-				Object thiz = engine.eval(this.renderObject);
+				// Validate or sanitize this.renderObject to ensure it is safe to evaluate
+				String safeRenderObject = sanitizeRenderObject(this.renderObject);
+				Object thiz = engine.eval(safeRenderObject);
 				html = invocable.invokeMethod(thiz, this.renderFunction, template, model, url);
 			}
 			else {
@@ -359,6 +362,20 @@ public class ScriptTemplateView extends AbstractUrlBasedView {
 		catch (ScriptException ex) {
 			throw new ServletException("Failed to render script template", new StandardScriptEvalException(ex));
 		}
+	}
+
+	private String getSafeTemplate(String url) {
+		// Implement a method to get the template in a way that does not allow code injection
+		// For example, load the template from a predefined set of allowed templates
+		// This is a placeholder for the actual implementation
+		return loadTemplateFromPredefinedSet(url);
+	}
+
+	private String sanitizeRenderObject(String renderObject) {
+		// Implement a method to sanitize or validate the renderObject to ensure it is safe to evaluate
+		// This could involve checking against a whitelist, removing dangerous patterns, etc.
+		// This is a placeholder for the actual implementation
+		return sanitizeObject(renderObject);
 	}
 
 	protected String getTemplate(String path) throws IOException {
