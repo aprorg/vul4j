@@ -726,8 +726,19 @@ public class TypeDescriptorTests {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ObjectOutputStream outputStream = new ObjectOutputStream(out);
 		outputStream.writeObject(typeDescriptor);
+
+		// Use a custom ObjectInputStream with a whitelist of allowed classes
 		ObjectInputStream inputStream = new ObjectInputStream(new ByteArrayInputStream(
-				out.toByteArray()));
+				out.toByteArray())) {
+			@Override
+			protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+				if (!desc.getName().equals(TypeDescriptor.class.getName())) {
+					throw new ClassNotFoundException("Unauthorized deserialization attempt");
+				}
+				return super.resolveClass(desc);
+			}
+		};
+
 		TypeDescriptor readObject = (TypeDescriptor) inputStream.readObject();
 		assertThat(readObject, equalTo(typeDescriptor));
 	}
