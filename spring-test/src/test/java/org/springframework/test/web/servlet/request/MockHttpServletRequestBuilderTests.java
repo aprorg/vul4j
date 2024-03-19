@@ -379,7 +379,11 @@ public class MockHttpServletRequestBuilderTests {
 	@Test
 	public void cookie() {
 		Cookie cookie1 = new Cookie("foo", "bar");
+		cookie1.setSecure(true); // Set the cookie to be sent only over a secure protocol like HTTPS
+		cookie1.setHttpOnly(true); // Protects the cookie from being accessed by JavaScript
 		Cookie cookie2 = new Cookie("baz", "qux");
+		cookie2.setSecure(true); // Set the cookie to be sent only over a secure protocol like HTTPS
+		cookie2.setHttpOnly(true); // Protects the cookie from being accessed by JavaScript
 		this.builder.cookie(cookie1, cookie2);
 
 		MockHttpServletRequest request = this.builder.buildRequest(this.servletContext);
