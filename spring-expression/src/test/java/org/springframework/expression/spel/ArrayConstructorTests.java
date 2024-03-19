@@ -116,91 +116,95 @@ public class ArrayConstructorTests extends AbstractExpressionTests {
 	}
 
 	private String evaluateArrayBuildingExpression(String expression, String expectedToString) {
-		SpelExpressionParser parser = new SpelExpressionParser();
-		Expression e = parser.parseExpression(expression);
-		Object o = e.getValue();
-		assertNotNull(o);
-		assertTrue(o.getClass().isArray());
-		StringBuilder s = new StringBuilder();
-		s.append('[');
-		if (o instanceof int[]) {
-			int[] array = (int[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof boolean[]) {
-			boolean[] array = (boolean[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof char[]) {
-			char[] array = (char[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof long[]) {
-			long[] array = (long[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof short[]) {
-			short[] array = (short[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof double[]) {
-			double[] array = (double[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof float[]) {
-			float[] array = (float[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else if (o instanceof byte[]) {
-			byte[] array = (byte[]) o;
-			for (int i = 0; i < array.length; i++) {
-				if (i > 0) {
-					s.append(',');
-				}
-				s.append(array[i]);
-			}
-		}
-		else {
-			fail("Not supported " + o.getClass());
-		}
-		s.append(']');
-		assertEquals(expectedToString, s.toString());
-		return s.toString();
+	    // Use a safe expression evaluation context or sanitize the input expression
+	    if (!isExpressionSafe(expression)) {
+	        throw new IllegalArgumentException("Unsafe expression detected");
+	    }
+	
+	    SpelExpressionParser parser = new SpelExpressionParser();
+	    Expression e = parser.parseExpression(expression);
+	    Object o = e.getValue();
+	    assertNotNull(o);
+	    assertTrue(o.getClass().isArray());
+	    StringBuilder s = new StringBuilder();
+	    s.append('[');
+	    if (o instanceof int[]) {
+	        int[] array = (int[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof boolean[]) {
+	        boolean[] array = (boolean[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof char[]) {
+	        char[] array = (char[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof long[]) {
+	        long[] array = (long[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof short[]) {
+	        short[] array = (short[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof double[]) {
+	        double[] array = (double[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof float[]) {
+	        float[] array = (float[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else if (o instanceof byte[]) {
+	        byte[] array = (byte[]) o;
+	        for (int i = 0; i < array.length; i++) {
+	            if (i > 0) {
+	                s.append(',');
+	            }
+	            s.append(array[i]);
+	        }
+	    } else {
+	        fail("Not supported " + o.getClass());
+	    }
+	    s.append(']');
+	    assertEquals(expectedToString, s.toString());
+	    return s.toString();
+	}
+	
+	private boolean isExpressionSafe(String expression) {
+	    // Implement a method to sanitize or validate the expression
+	    // For example, check against a whitelist of allowed characters or patterns
+	    // This is a placeholder for actual implementation
+	    return expression.matches("[\\w\\s]+");
 	}
 
 }
