@@ -51,121 +51,131 @@ import org.springframework.jdbc.support.lob.LobHandler;
 @Deprecated
 public class BlobSerializableType extends AbstractLobType {
 
-	/**
-	 * Initial size for ByteArrayOutputStreams used for serialization output.
-	 * <p>If a serialized object is larger than these 1024 bytes, the size of
-	 * the byte array used by the output stream will be doubled each time the
-	 * limit is reached.
-	 */
-	private static final int OUTPUT_BYTE_ARRAY_INITIAL_SIZE = 1024;
+    /**
+     * Initial size for ByteArrayOutputStreams used for serialization output.
+     * <p>If a serialized object is larger than these 1024 bytes, the size of
+     * the byte array used by the output stream will be doubled each time the
+     * limit is reached.
+     */
+    private static final int OUTPUT_BYTE_ARRAY_INITIAL_SIZE = 1024;
 
-	/**
-	 * Constructor used by Hibernate: fetches config-time LobHandler and
-	 * config-time JTA TransactionManager from LocalSessionFactoryBean.
-	 * @see org.springframework.orm.hibernate3.LocalSessionFactoryBean#getConfigTimeLobHandler
-	 * @see org.springframework.orm.hibernate3.LocalSessionFactoryBean#getConfigTimeTransactionManager
-	 */
-	public BlobSerializableType() {
-		super();
-	}
+    /**
+     * Constructor used by Hibernate: fetches config-time LobHandler and
+     * config-time JTA TransactionManager from LocalSessionFactoryBean.
+     * @see org.springframework.orm.hibernate3.LocalSessionFactoryBean#getConfigTimeLobHandler
+     * @see org.springframework.orm.hibernate3.LocalSessionFactoryBean#getConfigTimeTransactionManager
+     */
+    public BlobSerializableType() {
+        super();
+    }
 
-	/**
-	 * Constructor used for testing: takes an explicit LobHandler
-	 * and an explicit JTA TransactionManager (can be {@code null}).
-	 */
-	protected BlobSerializableType(LobHandler lobHandler, TransactionManager jtaTransactionManager) {
-		super(lobHandler, jtaTransactionManager);
-	}
+    /**
+     * Constructor used for testing: takes an explicit LobHandler
+     * and an explicit JTA TransactionManager (can be {@code null}).
+     */
+    protected BlobSerializableType(LobHandler lobHandler, TransactionManager jtaTransactionManager) {
+        super(lobHandler, jtaTransactionManager);
+    }
 
-	@Override
-	public int[] sqlTypes() {
-		return new int[] {Types.BLOB};
-	}
+    @Override
+    public int[] sqlTypes() {
+        return new int[] {Types.BLOB};
+    }
 
-	@Override
-	public Class<?> returnedClass() {
-		return Serializable.class;
-	}
+    @Override
+    public Class<?> returnedClass() {
+        return Serializable.class;
+    }
 
-	@Override
-	public boolean isMutable() {
-		return true;
-	}
+    @Override
+    public boolean isMutable() {
+        return true;
+    }
 
-	@Override
-	public Object deepCopy(Object value) throws HibernateException {
-		try {
-			// Write to new byte array to clone.
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(OUTPUT_BYTE_ARRAY_INITIAL_SIZE);
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			try {
-				oos.writeObject(value);
-			}
-			finally {
-				oos.close();
-			}
+    @Override
+    public Object deepCopy(Object value) throws HibernateException {
+        try {
+            // Write to new byte array to clone.
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(OUTPUT_BYTE_ARRAY_INITIAL_SIZE);
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            try {
+                oos.writeObject(value);
+            }
+            finally {
+                oos.close();
+            }
 
-			// Read it back and return a true copy.
-			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-			ObjectInputStream ois = new ObjectInputStream(bais);
-			try {
-				return ois.readObject();
-			}
-			finally {
-				ois.close();
-			}
-		}
-		catch (ClassNotFoundException ex) {
-			throw new HibernateException("Couldn't clone BLOB contents", ex);
-		}
-		catch (IOException ex) {
-			throw new HibernateException("Couldn't clone BLOB contents", ex);
-		}
-	}
+            // Read it back and return a true copy.
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais) {
+                @Override
+                protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                    throw new ClassNotFoundException("Deserialization not allowed for class " + desc.getName());
+                }
+            };
+            try {
+                return ois.readObject();
+            }
+            finally {
+                ois.close();
+            }
+        }
+        catch (ClassNotFoundException ex) {
+            throw new HibernateException("Couldn't clone BLOB contents", ex);
+        }
+        catch (IOException ex) {
+            throw new HibernateException("Couldn't clone BLOB contents", ex);
+        }
+    }
 
-	@Override
-	protected Object nullSafeGetInternal(
-			ResultSet rs, String[] names, Object owner, LobHandler lobHandler)
-			throws SQLException, IOException, HibernateException {
+    @Override
+    protected Object nullSafeGetInternal(
+            ResultSet rs, String[] names, Object owner, LobHandler lobHandler)
+            throws SQLException, IOException, HibernateException {
 
-		InputStream is = lobHandler.getBlobAsBinaryStream(rs, names[0]);
-		if (is != null) {
-			ObjectInputStream ois = new ObjectInputStream(is);
-			try {
-				return ois.readObject();
-			}
-			catch (ClassNotFoundException ex) {
-				throw new HibernateException("Could not deserialize BLOB contents", ex);
-			}
-			finally {
-				ois.close();
-			}
-		}
-		else {
-			return null;
-		}
-	}
+        InputStream is = lobHandler.getBlobAsBinaryStream(rs, names[0]);
+        if (is != null) {
+            ObjectInputStream ois = new ObjectInputStream(is) {
+                @Override
+                protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                    throw new ClassNotFoundException("Deserialization not allowed for class " + desc.getName());
+                }
+            };
+            try {
+                return ois.readObject();
+            }
+            catch (ClassNotFoundException ex) {
+                throw new HibernateException("Could not deserialize BLOB contents", ex);
+            }
+            finally {
+                ois.close();
+            }
+        }
+        else {
+            return null;
+        }
+    }
 
-	@Override
-	protected void nullSafeSetInternal(
-			PreparedStatement ps, int index, Object value, LobCreator lobCreator)
-			throws SQLException, IOException {
+    @Override
+    protected void nullSafeSetInternal(
+            PreparedStatement ps, int index, Object value, LobCreator lobCreator)
+            throws SQLException, IOException {
 
-		if (value != null) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(OUTPUT_BYTE_ARRAY_INITIAL_SIZE);
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			try {
-				oos.writeObject(value);
-				oos.flush();
-				lobCreator.setBlobAsBytes(ps, index, baos.toByteArray());
-			}
-			finally {
-				oos.close();
-			}
-		}
-		else {
-			lobCreator.setBlobAsBytes(ps, index, null);
-		}
-	}
+        if (value != null) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(OUTPUT_BYTE_ARRAY_INITIAL_SIZE);
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            try {
+                oos.writeObject(value);
+                oos.flush();
+                lobCreator.setBlobAsBytes(ps, index, baos.toByteArray());
+            }
+            finally {
+                oos.close();
+            }
+        }
+        else {
+            lobCreator.setBlobAsBytes(ps, index, null);
+        }
+    }
 
 }
