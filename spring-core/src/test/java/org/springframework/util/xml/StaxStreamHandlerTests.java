@@ -29,6 +29,7 @@ public class StaxStreamHandlerTests extends AbstractStaxHandlerTestCase {
 	@Override
 	protected AbstractStaxHandler createStaxHandler(Result result) throws XMLStreamException {
 		XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
+		outputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, false);
 		XMLStreamWriter streamWriter = outputFactory.createXMLStreamWriter(result);
 		return new StaxStreamHandler(streamWriter);
 	}
