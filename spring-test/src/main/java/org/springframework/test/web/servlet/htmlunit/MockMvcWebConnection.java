@@ -195,6 +195,8 @@ public final class MockMvcWebConnection implements WebConnection {
 				cookie.setDomain(webRequest.getUrl().getHost());
 			}
 			Cookie toManage = MockWebResponseBuilder.createCookie(cookie);
+			toManage.setHttpOnly(true); // Set HttpOnly flag
+			toManage.setSecure(true); // Set Secure flag
 			Date expires = toManage.getExpires();
 			if (expires == null || expires.after(now)) {
 				cookieManager.addCookie(toManage);

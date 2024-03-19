@@ -109,6 +109,13 @@ public class XpathExpectationsHelper {
 	protected Document parseXmlByteArray(byte[] xml, String encoding) throws Exception {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(this.hasNamespaces);
+		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+		factory.setXIncludeAware(false);
+		factory.setExpandEntityReferences(false);
+		
 		DocumentBuilder documentBuilder = factory.newDocumentBuilder();
 		InputSource inputSource = new InputSource(new ByteArrayInputStream(xml));
 		if (StringUtils.hasText(encoding)) {

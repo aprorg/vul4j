@@ -83,6 +83,13 @@ public class XStreamMarshallerTests {
 	@Test
 	public void marshalDOMResult() throws Exception {
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+		documentBuilderFactory.setXIncludeAware(false);
+		documentBuilderFactory.setExpandEntityReferences(false);
+		
 		DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
 		Document document = builder.newDocument();
 		DOMResult domResult = new DOMResult(document);
@@ -101,6 +108,12 @@ public class XStreamMarshallerTests {
 	@Test
 	public void marshalDOMResultToExistentDocument() throws Exception {
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+		documentBuilderFactory.setXIncludeAware(false);
+		documentBuilderFactory.setExpandEntityReferences(false);
 		DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
 		Document existent = builder.newDocument();
 		Element rootElement = existent.createElement("root");

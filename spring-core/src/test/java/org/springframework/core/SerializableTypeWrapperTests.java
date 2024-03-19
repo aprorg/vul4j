@@ -136,8 +136,36 @@ public class SerializableTypeWrapperTests {
 		ObjectOutputStream oos = new ObjectOutputStream(bos);
 		oos.writeObject(source);
 		oos.close();
-		ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
+
+		// Use a custom ObjectInputStream with a whitelist of allowed classes
+		ObjectInputStream ois = new LookAheadObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
 		assertThat(ois.readObject(), equalTo(source));
+	}
+
+	// Custom ObjectInputStream to only deserialize instances of allowed classes
+	private static class LookAheadObjectInputStream extends ObjectInputStream {
+
+		public LookAheadObjectInputStream(InputStream inputStream) throws IOException {
+			super(inputStream);
+		}
+
+		@Override
+		protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+			if (!isAllowed(desc.getName())) {
+				throw new InvalidClassException("Unauthorized deserialization attempt", desc.getName());
+			}
+			return super.resolveClass(desc);
+		}
+
+		private boolean isAllowed(String className) {
+			// Define a list of allowed classes for deserialization
+			List<String> allowedClasses = Arrays.asList(
+				"java.lang.String", // Example of allowed class
+				"java.util.ArrayList" // Another example of allowed class
+				// Add other classes as needed
+			);
+			return allowedClasses.contains(className);
+		}
 	}
 
 

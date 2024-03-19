@@ -21,6 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputFilter;
 
 /**
  * Static utilities for serialization and deserialization.
@@ -61,7 +63,18 @@ public abstract class SerializationUtils {
 			return null;
 		}
 		try {
-			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			ObjectInputStream ois = new ObjectInputStream(bais) {
+				protected ObjectInputStream resolveObject(ObjectInputStream ois) throws IOException {
+					if (ois != null) {
+						ObjectInputFilter filter = ObjectInputFilter.Config.getSerialFilter();
+						if (filter != null) {
+							ois.setObjectInputFilter(filter);
+						}
+					}
+					return ois;
+				}
+			};
 			return ois.readObject();
 		}
 		catch (IOException ex) {

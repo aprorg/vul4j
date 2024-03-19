@@ -18,6 +18,7 @@ package org.springframework.test.util;
 
 import java.io.StringReader;
 import java.util.Map;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Source;
@@ -26,6 +27,7 @@ import javax.xml.transform.dom.DOMSource;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.hamcrest.Matcher;
+import org.springframework.util.AssertionErrors;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -51,6 +53,11 @@ public class XmlExpectationsHelper {
 	private Document parseXmlString(String xml) throws Exception  {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
+		factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 		DocumentBuilder documentBuilder = factory.newDocumentBuilder();
 		InputSource inputSource = new InputSource(new StringReader(xml));
 		return documentBuilder.parse(inputSource);

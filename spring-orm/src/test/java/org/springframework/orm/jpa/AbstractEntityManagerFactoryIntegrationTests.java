@@ -85,6 +85,9 @@ public abstract class AbstractEntityManagerFactoryIntegrationTests extends org.s
 	}
 
 	protected int countRowsInTable(EntityManager em, String tableName) {
+		if (tableName == null || !tableName.matches("[A-Za-z0-9_]+")) {
+			throw new IllegalArgumentException("Invalid table name");
+		}
 		Query query = em.createNativeQuery("SELECT COUNT(0) FROM " + tableName);
 		return ((Number) query.getSingleResult()).intValue();
 	}

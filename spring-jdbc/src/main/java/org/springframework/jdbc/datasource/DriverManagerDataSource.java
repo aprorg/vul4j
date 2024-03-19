@@ -124,9 +124,16 @@ public class DriverManagerDataSource extends AbstractDriverBasedDataSource {
 		Assert.hasText(driverClassName, "Property 'driverClassName' must not be empty");
 		String driverClassNameToUse = driverClassName.trim();
 		try {
-			Class.forName(driverClassNameToUse, true, ClassUtils.getDefaultClassLoader());
+			// Validate that the driver class is loadable and registered
+			Class<?> driverClass = ClassUtils.getDefaultClassLoader().loadClass(driverClassNameToUse);
+			if (!java.sql.Driver.class.isAssignableFrom(driverClass)) {
+				throw new IllegalStateException("Specified class is not a valid JDBC Driver: " + driverClassNameToUse);
+			}
+			// This will register the driver with DriverManager
+			Driver driverInstance = (Driver) driverClass.getDeclaredConstructor().newInstance();
+			DriverManager.registerDriver(new DriverShim(driverInstance));
 		}
-		catch (ClassNotFoundException ex) {
+		catch (Exception ex) {
 			throw new IllegalStateException("Could not load JDBC driver class [" + driverClassNameToUse + "]", ex);
 		}
 		if (logger.isInfoEnabled()) {
@@ -151,6 +158,46 @@ public class DriverManagerDataSource extends AbstractDriverBasedDataSource {
 	 */
 	protected Connection getConnectionFromDriverManager(String url, Properties props) throws SQLException {
 		return DriverManager.getConnection(url, props);
+	}
+
+	/**
+	 * Shim for the original driver class so that it can be deregistered later.
+	 */
+	private static class DriverShim implements Driver {
+		private Driver driver;
+
+		DriverShim(Driver d) {
+			this.driver = d;
+		}
+
+		public boolean acceptsURL(String u) throws SQLException {
+			return this.driver.acceptsURL(u);
+		}
+
+		public Connection connect(String u, Properties p) throws SQLException {
+			return this.driver.connect(u, p);
+		}
+
+		public int getMajorVersion() {
+			return this.driver.getMajorVersion();
+		}
+
+		public int getMinorVersion() {
+			return this.driver.getMinorVersion();
+		}
+
+		public DriverPropertyInfo[] getPropertyInfo(String u, Properties p) throws SQLException {
+			return this.driver.getPropertyInfo(u, p);
+		}
+
+		public boolean jdbcCompliant() {
+			return this.driver.jdbcCompliant();
+		}
+
+		@Override
+		public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+			return this.driver.getParentLogger();
+		}
 	}
 
 }

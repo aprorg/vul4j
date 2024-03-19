@@ -30,6 +30,7 @@ import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.AbstractHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConversionException;
+import javax.xml.XMLConstants;
 
 /**
  * Abstract base class for {@link org.springframework.http.converter.HttpMessageConverter HttpMessageConverters}
@@ -42,62 +43,67 @@ import org.springframework.http.converter.HttpMessageConversionException;
  * @author Arjen Poutsma
  * @since 3.0
  */
+
 public abstract class AbstractXmlHttpMessageConverter<T> extends AbstractHttpMessageConverter<T> {
 
-	private final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    private final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
+    /**
+     * Protected constructor that sets the {@link #setSupportedMediaTypes(java.util.List) supportedMediaTypes}
+     * to {@code text/xml} and {@code application/xml}, and {@code application/*-xml}.
+     */
+    protected AbstractXmlHttpMessageConverter() {
+        super(MediaType.APPLICATION_XML, MediaType.TEXT_XML, new MediaType("application", "*+xml"));
+        try {
+            this.transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            this.transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            this.transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        } catch (TransformerConfigurationException e) {
+            throw new IllegalStateException("Failed to configure TransformerFactory", e);
+        }
+    }
 
-	/**
-	 * Protected constructor that sets the {@link #setSupportedMediaTypes(java.util.List) supportedMediaTypes}
-	 * to {@code text/xml} and {@code application/xml}, and {@code application/*-xml}.
-	 */
-	protected AbstractXmlHttpMessageConverter() {
-		super(MediaType.APPLICATION_XML, MediaType.TEXT_XML, new MediaType("application", "*+xml"));
-	}
+    @Override
+    public final T readInternal(Class<? extends T> clazz, HttpInputMessage inputMessage) throws IOException {
+        return readFromSource(clazz, inputMessage.getHeaders(), new StreamSource(inputMessage.getBody()));
+    }
 
+    @Override
+    protected final void writeInternal(T t, HttpOutputMessage outputMessage) throws IOException {
+        writeToResult(t, outputMessage.getHeaders(), new StreamResult(outputMessage.getBody()));
+    }
 
-	@Override
-	public final T readInternal(Class<? extends T> clazz, HttpInputMessage inputMessage) throws IOException {
-		return readFromSource(clazz, inputMessage.getHeaders(), new StreamSource(inputMessage.getBody()));
-	}
+    /**
+     * Transforms the given {@code Source} to the {@code Result}.
+     * @param source the source to transform from
+     * @param result the result to transform to
+     * @throws TransformerException in case of transformation errors
+     */
+    protected void transform(Source source, Result result) throws TransformerException {
+        this.transformerFactory.newTransformer().transform(source, result);
+    }
 
-	@Override
-	protected final void writeInternal(T t, HttpOutputMessage outputMessage) throws IOException {
-		writeToResult(t, outputMessage.getHeaders(), new StreamResult(outputMessage.getBody()));
-	}
+    /**
+     * Abstract template method called from {@link #read(Class, HttpInputMessage)}.
+     * @param clazz the type of object to return
+     * @param headers the HTTP input headers
+     * @param source the HTTP input body
+     * @return the converted object
+     * @throws IOException in case of I/O errors
+     * @throws org.springframework.http.converter.HttpMessageConversionException in case of conversion errors
+     */
+    protected abstract T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source)
+            throws IOException;
 
-	/**
-	 * Transforms the given {@code Source} to the {@code Result}.
-	 * @param source the source to transform from
-	 * @param result the result to transform to
-	 * @throws TransformerException in case of transformation errors
-	 */
-	protected void transform(Source source, Result result) throws TransformerException {
-		this.transformerFactory.newTransformer().transform(source, result);
-	}
-
-
-	/**
-	 * Abstract template method called from {@link #read(Class, HttpInputMessage)}.
-	 * @param clazz the type of object to return
-	 * @param headers the HTTP input headers
-	 * @param source the HTTP input body
-	 * @return the converted object
-	 * @throws IOException in case of I/O errors
-	 * @throws org.springframework.http.converter.HttpMessageConversionException in case of conversion errors
-	 */
-	protected abstract T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source)
-			throws IOException;
-
-	/**
-	 * Abstract template method called from {@link #writeInternal(Object, HttpOutputMessage)}.
-	 * @param t the object to write to the output message
-	 * @param headers the HTTP output headers
-	 * @param result the HTTP output body
-	 * @throws IOException in case of I/O errors
-	 * @throws HttpMessageConversionException in case of conversion errors
-	 */
-	protected abstract void writeToResult(T t, HttpHeaders headers, Result result)
-			throws IOException;
+    /**
+     * Abstract template method called from {@link #writeInternal(Object, HttpOutputMessage)}.
+     * @param t the object to write to the output message
+     * @param headers the HTTP output headers
+     * @param result the HTTP output body
+     * @throws IOException in case of I/O errors
+     * @throws HttpMessageConversionException in case of conversion errors
+     */
+    protected abstract void writeToResult(T t, HttpHeaders headers, Result result)
+            throws IOException;
 
 }

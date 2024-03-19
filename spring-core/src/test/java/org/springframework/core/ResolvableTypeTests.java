@@ -1314,7 +1314,18 @@ public class ResolvableTypeTests {
 		ObjectOutputStream oos = new ObjectOutputStream(bos);
 		oos.writeObject(type);
 		oos.close();
-		ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
+
+		// Use a custom ObjectInputStream with a whitelist of allowed classes
+		ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray())) {
+			@Override
+			protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+				if (!desc.getName().equals(ResolvableType.class.getName())) {
+					throw new ClassNotFoundException("Unauthorized deserialization attempt");
+				}
+				return super.resolveClass(desc);
+			}
+		};
+
 		ResolvableType read = (ResolvableType) ois.readObject();
 		assertThat(read, equalTo(type));
 		assertThat(read.getType(), equalTo(type.getType()));

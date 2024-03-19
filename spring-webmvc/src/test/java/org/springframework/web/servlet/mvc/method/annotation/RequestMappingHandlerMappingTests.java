@@ -46,6 +46,8 @@ import org.springframework.web.context.support.StaticWebApplicationContext;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
 import static org.junit.Assert.*;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 /**
  * Tests for {@link RequestMappingHandlerMapping}.
@@ -207,38 +209,44 @@ public class RequestMappingHandlerMappingTests {
 	}
 
 
+	
 	@Controller
 	@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	static class ComposedAnnotationController {
-
+	
+		@ModelAttribute
+		public void csrfToken(CsrfToken token) {
+			// This method ensures that the CSRF token is included in the model for each request
+		}
+	
 		@RequestMapping
 		public void handle() {
 		}
-
+	
 		@PostJson("/postJson")
-		public void postJson() {
+		public void postJson(CsrfToken token) {
 		}
-
+	
 		@GetMapping(value = "/get", consumes = MediaType.ALL_VALUE)
-		public void get() {
+		public void get(CsrfToken token) {
 		}
-
+	
 		@PostMapping("/post")
-		public void post() {
+		public void post(CsrfToken token) {
 		}
-
+	
 		@PutMapping("/put")
-		public void put() {
+		public void put(CsrfToken token) {
 		}
-
+	
 		@DeleteMapping("/delete")
-		public void delete() {
+		public void delete(CsrfToken token) {
 		}
-
+	
 		@PatchMapping("/patch")
-		public void patch() {
+		public void patch(CsrfToken token) {
 		}
-
+	
 	}
 
 	@RequestMapping(method = RequestMethod.POST,

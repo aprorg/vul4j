@@ -1050,18 +1050,20 @@ public class LocalSessionFactoryBean extends AbstractSessionFactoryBean implemen
 	 * @param sql the SQL statement to execute
 	 * @throws SQLException if thrown by JDBC methods (and considered fatal)
 	 */
-	protected void executeSchemaStatement(Statement stmt, String sql) throws SQLException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Executing schema statement: " + sql);
-		}
-		try {
-			stmt.executeUpdate(sql);
-		}
-		catch (SQLException ex) {
-			if (logger.isWarnEnabled()) {
-				logger.warn("Unsuccessful schema statement: " + sql, ex);
-			}
-		}
+	protected void executeSchemaStatement(Connection conn, String sql, Object[] parameters) throws SQLException {
+	    if (logger.isDebugEnabled()) {
+	        logger.debug("Executing schema statement: " + sql);
+	    }
+	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+	        for (int i = 0; i < parameters.length; i++) {
+	            pstmt.setObject(i + 1, parameters[i]);
+	        }
+	        pstmt.executeUpdate();
+	    } catch (SQLException ex) {
+	        if (logger.isWarnEnabled()) {
+	            logger.warn("Unsuccessful schema statement: " + sql, ex);
+	        }
+	    }
 	}
 
 }

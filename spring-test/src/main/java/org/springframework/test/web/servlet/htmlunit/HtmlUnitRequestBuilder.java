@@ -354,7 +354,10 @@ final class HtmlUnitRequestBuilder implements RequestBuilder, Mergeable {
 	}
 
 	private void addSessionCookie(MockHttpServletRequest request, String sessionid) {
-		getCookieManager().addCookie(createCookie(request, sessionid));
+		Cookie cookie = createCookie(request, sessionid);
+		cookie.setHttpOnly(true);
+		cookie.setSecure(true);
+		getCookieManager().addCookie(cookie);
 	}
 
 	private void removeSessionCookie(MockHttpServletRequest request, String sessionid) {

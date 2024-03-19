@@ -1858,7 +1858,18 @@ public class DataBinderTests {
 		ObjectOutputStream oos = new ObjectOutputStream(baos);
 		oos.writeObject(ex);
 		ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-		ObjectInputStream ois = new ObjectInputStream(bais);
+
+		// Use a custom ObjectInputStream that validates the classes being deserialized
+		ObjectInputStream ois = new ObjectInputStream(bais) {
+			@Override
+			protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+				String name = desc.getName();
+				if (!name.startsWith("org.springframework.validation.")) {
+					throw new InvalidClassException("Unauthorized deserialization attempt", name);
+				}
+				return super.resolveClass(desc);
+			}
+		};
 
 		BindException ex2 = (BindException) ois.readObject();
 		assertTrue(ex2.hasGlobalErrors());

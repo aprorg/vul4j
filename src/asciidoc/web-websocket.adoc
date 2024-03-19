@@ -968,7 +968,8 @@ The example below shows how to create a SockJS client and connect to a SockJS en
   transports.add(new RestTemplateXhrTransport());
 
   SockJsClient sockJsClient = new SockJsClient(transports);
-  sockJsClient.doHandshake(new MyWebSocketHandler(), "ws://example.com:8080/sockjs");
+  sockJsClient.doHandshake(new MyWebSocketHandler(), "wss://example.com:8080/sockjs");
+
 ----
 
 [NOTE]

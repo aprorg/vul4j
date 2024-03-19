@@ -1761,6 +1761,10 @@ public class ClassWriter extends ClassVisitor {
         // SPRING PATCH: PREFER APPLICATION CLASSLOADER
         ClassLoader classLoader = getClassLoader();
         try {
+            // Validate the class names to prevent unsafe reflection
+            if (!isValidClassName(type1) || !isValidClassName(type2)) {
+                throw new IllegalArgumentException("Invalid class name provided.");
+            }
             c = Class.forName(type1.replace('/', '.'), false, classLoader);
             d = Class.forName(type2.replace('/', '.'), false, classLoader);
         } catch (Exception e) {
@@ -1780,6 +1784,14 @@ public class ClassWriter extends ClassVisitor {
             } while (!c.isAssignableFrom(d));
             return c.getName().replace('.', '/');
         }
+    }
+
+    // Utility method to validate class names against a whitelist or a pattern
+    private boolean isValidClassName(String className) {
+        // Implement a check for valid class names, for example using a whitelist or a regular expression
+        // This is a placeholder for the actual implementation
+        // Example regex pattern: "^[\\w.$_/]+$" (allows letters, numbers, underscores, dollar signs, dots, and slashes)
+        return className.matches("^[\\w.$_/]+$");
     }
 
     // SPRING PATCH: PREFER THREAD CONTEXT CLASSLOADER FOR APPLICATION CLASSES

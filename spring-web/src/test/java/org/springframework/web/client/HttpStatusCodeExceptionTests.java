@@ -49,8 +49,20 @@ public class HttpStatusCodeExceptionTests {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		new ObjectOutputStream(out).writeObject(ex1);
 		ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-		HttpStatusCodeException ex2 =
-				(HttpStatusCodeException) new ObjectInputStream(in).readObject();
+
+		// Custom ObjectInputStream subclass to prevent deserialization of untrusted data
+		ObjectInputStream ois = new ObjectInputStream(in) {
+			@Override
+			protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+				String name = desc.getName();
+				if (!name.equals("org.springframework.web.client.HttpStatusCodeException")) {
+					throw new InvalidClassException("Unauthorized deserialization attempt", name);
+				}
+				return super.resolveClass(desc);
+			}
+		};
+
+		HttpStatusCodeException ex2 = (HttpStatusCodeException) ois.readObject();
 		assertThat(ex2.getResponseBodyAsString(), equalTo(ex1.getResponseBodyAsString()));
 	}
 
