@@ -340,6 +340,7 @@ public class JibxMarshaller extends AbstractMarshaller implements InitializingBe
 			marshalOutputStream(graph, os);
 			ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
 			Transformer transformer = this.transformerFactory.newTransformer();
+			transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 			transformer.transform(new StreamSource(is), result);
 		}
 		catch (TransformerException ex) {
@@ -420,6 +421,7 @@ public class JibxMarshaller extends AbstractMarshaller implements InitializingBe
 
 	private Object transformAndUnmarshal(Source source, String encoding) throws IOException {
 		try {
+			transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 			Transformer transformer = this.transformerFactory.newTransformer();
 			if (encoding != null) {
 				transformer.setOutputProperty(OutputKeys.ENCODING, encoding);
