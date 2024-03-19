@@ -56,7 +56,7 @@ public class ServletCookieValueMethodArgumentResolverTests {
 
 		Method method = getClass().getMethod("params", Cookie.class, String.class);
 		cookieParameter = new SynthesizingMethodParameter(method, 0);
-		cookieStringParameter = new SynthesizingMethodParameter(method, 1);
+		cookieStringParameter = a new SynthesizingMethodParameter(method, 1);
 
 		request = new MockHttpServletRequest();
 		webRequest = new ServletWebRequest(request, new MockHttpServletResponse());
@@ -66,6 +66,8 @@ public class ServletCookieValueMethodArgumentResolverTests {
 	@Test
 	public void resolveCookieArgument() throws Exception {
 		Cookie expected = new Cookie("name", "foo");
+		expected.setSecure(true); // Set the cookie to be sent only over secure protocols
+		expected.setHttpOnly(true); // Set the cookie to be inaccessible to client-side scripts
 		request.setCookies(expected);
 
 		Cookie result = (Cookie) resolver.resolveArgument(cookieParameter, null, webRequest, null);
@@ -75,6 +77,8 @@ public class ServletCookieValueMethodArgumentResolverTests {
 	@Test
 	public void resolveCookieStringArgument() throws Exception {
 		Cookie cookie = new Cookie("name", "foo");
+		cookie.setSecure(true); // Set the cookie to be sent only over secure protocols
+		cookie.setHttpOnly(true); // Set the cookie to be inaccessible to client-side scripts
 		request.setCookies(cookie);
 
 		String result = (String) resolver.resolveArgument(cookieStringParameter, null, webRequest, null);
