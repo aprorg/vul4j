@@ -142,17 +142,28 @@ public class ListTests extends AbstractExpressionTests {
 	}
 
 	private void checkConstantList(String expressionText, boolean expectedToBeConstant) {
-		SpelExpressionParser parser = new SpelExpressionParser();
-		SpelExpression expression = (SpelExpression) parser.parseExpression(expressionText);
-		SpelNode node = expression.getAST();
-		assertTrue(node instanceof InlineList);
-		InlineList inlineList = (InlineList) node;
-		if (expectedToBeConstant) {
-			assertTrue(inlineList.isConstant());
-		}
-		else {
-			assertFalse(inlineList.isConstant());
-		}
+	    if (!isSafeExpression(expressionText)) {
+	        throw new IllegalArgumentException("Unsafe expression provided");
+	    }
+	    SpelExpressionParser parser = new SpelExpressionParser();
+	    SpelExpression expression = (SpelExpression) parser.parseExpression(expressionText);
+	    SpelNode node = expression.getAST();
+	    assertTrue(node instanceof InlineList);
+	    InlineList inlineList = (InlineList) node;
+	    if (expectedToBeConstant) {
+	        assertTrue(inlineList.isConstant());
+	    } else {
+	        assertFalse(inlineList.isConstant());
+	    }
+	}
+	
+	private boolean isSafeExpression(String expression) {
+	    // Implement a method to validate the expression, e.g., against a whitelist of allowed characters/patterns
+	    // This is a placeholder for actual implementation
+	    // For example, you can check if the expression contains only numbers, letters, and certain symbols
+	    Pattern safePattern = Pattern.compile("^[\\w\\d\\s,]+$"); // Adjust the regex pattern to match safe expressions
+	    Matcher matcher = safePattern.matcher(expression);
+	    return matcher.matches();
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
