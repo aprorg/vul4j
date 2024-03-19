@@ -1652,6 +1652,10 @@ public abstract class AnnotationUtils {
 	 */
 	private static boolean canExposeSynthesizedMarker(Class<? extends Annotation> annotationType) {
 		try {
+			// Ensure that the name of the class to be loaded is not controlled by external input
+			if (!SynthesizedAnnotation.class.getName().equals(annotationType.getName())) {
+				return false;
+			}
 			return (Class.forName(SynthesizedAnnotation.class.getName(), false, annotationType.getClassLoader()) ==
 					SynthesizedAnnotation.class);
 		}
