@@ -110,10 +110,18 @@ public class FilterTests {
 
 	@Controller
 	private static class PersonController {
+	
+		@Autowired
+		private CsrfTokenRepository csrfTokenRepository;
+
 		@RequestMapping(value="/persons", method=RequestMethod.POST)
-		public String save(@Valid Person person, Errors errors, RedirectAttributes redirectAttrs) {
+		public String save(@Valid Person person, Errors errors, RedirectAttributes redirectAttrs, HttpServletRequest request) {
 			if (errors.hasErrors()) {
 				return "person/add";
+			}
+			CsrfToken csrfToken = csrfTokenRepository.loadToken(request);
+			if (csrfToken != null) {
+				redirectAttrs.addAttribute(csrfToken.getParameterName(), csrfToken.getToken());
 			}
 			redirectAttrs.addAttribute("id", "1");
 			redirectAttrs.addFlashAttribute("message", "success!");
@@ -121,12 +129,21 @@ public class FilterTests {
 		}
 
 		@RequestMapping(value="/user")
-		public ModelAndView user(Principal principal) {
-			return new ModelAndView("user/view", "principal", principal.getName());
+		public ModelAndView user(Principal principal, HttpServletRequest request) {
+			ModelAndView modelAndView = new ModelAndView("user/view", "principal", principal.getName());
+			CsrfToken csrfToken = csrfTokenRepository.loadToken(request);
+			if (csrfToken != null) {
+				modelAndView.addObject(csrfToken.getParameterName(), csrfToken.getToken());
+			}
+			return modelAndView;
 		}
 
 		@RequestMapping(value="/forward")
-		public String forward() {
+		public String forward(HttpServletRequest request) {
+			CsrfToken csrfToken = csrfTokenRepository.loadToken(request);
+			if (csrfToken != null) {
+				request.setAttribute(csrfToken.getParameterName(), csrfToken.getToken());
+			}
 			return "forward:/persons";
 		}
 	}
